@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8">
+    <title>Malupiton Birdy: Galactic Horror (Enhanced Visuals)</title> 
+    <style> 
+        :root {
+            --neon: #8e2de2;
+            --danger: #ff0033;
+            --bg: #020205;
+            --metal: #4b4b4b;
+            --accent: #00f2ff;
+        }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: var(--bg); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas { display: block; }
+        
+        .panel {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            padding: 30px; border-radius: 0px;
+            text-align: center; border: none;
+            box-shadow: none;
+            z-index: 100; color: white; min-width: 320px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        @keyframes jejeFlash { 0% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.1) rotate(5deg); } 50% { transform: scale(1.2) rotate(-5deg); } 75% { transform: scale(1.1) rotate(3deg); } 100% { transform: scale(1) rotate(0deg); } }
+        @keyframes rainbowText { 0% { color: #ff0000; text-shadow: 0 0 20px #ff0000; } 16% { color: #ff8800; text-shadow: 0 0 20px #ff8800; } 33% { color: #ffff00; text-shadow: 0 0 20px #ffff00; } 50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; } 66% { color: #0088ff; text-shadow: 0 0 20px #0088ff; } 83% { color: #8800ff; text-shadow: 0 0 20px #8800ff; } 100% { color: #ff0000; text-shadow: 0 0 20px #ff0000; } }
+        @keyframes bgPulse { 0% { background: rgba(255, 0, 51, 0.1); } 50% { background: rgba(255, 0, 51, 0.3); } 100% { background: rgba(255, 0, 51, 0.1); } }
+
+        .scare-mini {
+            width: 200px; height: 200px; margin: 15px auto;
+            border: 3px solid var(--danger); border-radius: 20px;
+            display: block; object-fit: cover;
+            box-shadow: 0 0 30px rgba(255, 0, 51, 0.6);
+        }
+
+        h1 { 
+            margin: 0 0 15px; font-size: 32px; letter-spacing: 3px; 
+            text-transform: uppercase; font-weight: 900;
+            background: linear-gradient(to right, #fff, var(--neon), #fff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(142, 45, 226, 0.5);
+        }
+
+        #countdownOverlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 30px var(--accent);
+            z-index: 200; display: none; pointer-events: none;
+        }
+
+        .field { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 10px; color: var(--neon); letter-spacing: 2px; margin-bottom: 8px; font-weight: bold; }
+
+        input, select {
+            width: 100%; padding: 15px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(142, 45, 226, 0.4); border-radius: 12px;
+            color: white; font-size: 16px; outline: none; transition: 0.3s;
+            box-sizing: border-box;
+        }
+        select { color: black; background: white; font-weight: bold; }
+
+        button {
+            width: 100%; padding: 15px; margin-top: 10px; border-radius: 12px;
+            border: none; cursor: pointer; font-weight: 800; font-size: 14px;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+            background: linear-gradient(45deg, var(--neon), #4facfe); color: white;
+        }
+        button:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(142, 45, 226, 0.6); }
+
+        #stats {
+            position: absolute; top: 30px; left: 30px;
+            color: #fff; pointer-events: none; z-index: 10;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+        }
+        
+        #settingsBtn {
+            position: absolute; top: 30px; right: 30px;
+            background: rgba(255,255,255,0.1); border: 1px solid var(--neon);
+            color: white; width: 45px; height: 45px; border-radius: 50%;
+            cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: 0.3s;
+        }
+        #settingsBtn:hover { background: var(--neon); transform: rotate(90deg); }
+
+        .user-tag { font-size: 14px; color: #4facfe; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        .score-num { font-size: 60px; font-weight: 900; line-height: 1; color: #fff; }
+        .best-num { font-size: 14px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 5px; }
+
+        #yt-player { position: absolute; top: -1000px; }
+    </style> 
+</head> 
+<body> 
+
+    <div id="yt-player"></div>
+    <div id="countdownOverlay">3</div>
+    
+    <button id="settingsBtn" onclick="toggleMusic()" title="Toggle Music">🎵</button>
+
+    <div id="menu" class="panel">
+        <h1>MALUPITON BIRDY</h1>
+        <div class="field">
+            <label>PILOT DESIGNATION</label>
+            <input type="text" id="playerName" placeholder="SINO KA LODI?" maxlength="12">
+            <div id="nameError" style="color: #ff0033; font-size: 12px; margin-top: 5px; display: none;">KAILANGAN MAGLAGAY NG PANGALAN BAGO MAG-LAUNCH!</div>
+        </div>
+        <div class="field">
+            <label>CHARACTER SELECTION</label>
+            <div style="display: flex; gap: 15px; justify-content: center; margin: 15px 0;">
+                <div onclick="selectCharacter('player')" id="char1" style="cursor: pointer; text-align: center; border: 3px solid transparent; border-radius: 10px; padding: 10px; transition: 0.3s;">
+                    <img src="PLAYER2.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon); margin-bottom: 5px;">
+                    <div style="color: white; font-size: 12px; font-weight: bold;">HAPPY FRIEND</div>
+                </div>
+                <div onclick="selectCharacter('malupiton')" id="char2" style="cursor: pointer; text-align: center; border: 3px solid white; border-radius: 10px; padding: 10px; transition: 0.3s; background: rgba(255,255,255,0.1);">
+                    <img src="malupiton.jpg" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon); margin-bottom: 5px;">
+                    <div style="color: white; font-size: 12px; font-weight: bold;">MALUPITON</div>
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <label>SECTOR DIFFICULTY</label>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="setDifficulty('easy')" id="easyBtn" style="background: linear-gradient(45deg, #00ff00, #00cc00); border: none; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">EASY</button>
+                <button onclick="setDifficulty('medium')" id="mediumBtn" style="background: linear-gradient(45deg, #ffaa00, #ff8800); border: 3px solid white; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; transform: scale(1.1);">MEDIUM</button>
+                <button onclick="setDifficulty('hard')" id="hardBtn" style="background: linear-gradient(45deg, #ff0000, #cc0000); border: none; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">HARD</button>
+            </div>
+        </div>
+        <button onclick="startCountdown()">Launch Aircraft</button>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <p style="color: rgba(255,255,255,0.5); font-size: 12px; margin: 0; text-transform: none; letter-spacing: 1px;">@created by carl ivan ken simbulan</p>
+        </div>
+    </div>
+
+    <div id="gameOverMenu" class="panel" style="display:none; text-align: center;">
+        <h1 style="color: white; font-size: 48px; font-weight: bold; margin-bottom: 20px;">ARAY KO!</h1>
+        <img src="jumpscare.jpg" style="width: 200px; height: 200px; border-radius: 20px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="startCountdown()" style="padding: 10px 20px; background: #ff0066; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+            <button onclick="exitToMenu()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 5px; cursor: pointer;">Back to Base</button>
+        </div>
+    </div>
+
+    <div id="stats" style="display:none">
+        <div id="displayName" class="user-tag">PILOT: UNKNOWN</div>
+        <div id="scoreDisplay" class="score-num">0</div>
+        <div class="best-num">Record: <span id="highScoreDisplay">0</span></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        let audioCtx;
+        let isMusicOn = true;
+        let player;
+        const LOOP_LIMIT = 284; // 4:44
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            const btn = document.getElementById("settingsBtn");
+            if (player && player.setVolume) {
+                if (isMusicOn) {
+                    player.playVideo();
+                    btn.innerText = "🎵";
+                    btn.style.opacity = "1";
+                } else {
+                    player.pauseVideo();
+                    btn.innerText = "🔇";
+                    btn.style.opacity = "0.5";
+                }
+            }
+        }
+
+        function playJumpSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; 
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function playCountdownSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function playGoSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playGameOverSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.6);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+        }
+
+        let gameLoopId;
+        // Bird dimensions adjusted for circular look
+        let bird = { x: 150, y: 0, w: 70, h: 70, v: 0, g: 0.35, jump: -7.5 }; 
+        let pipes = [], stars = [], bullets = [], bgElements = [], coins = [], particles = [];
+        let score = 0, pipeCount = 0, frame = 0, running = false, dead = false;
+        let speed = 7, gap = 250, freq = 85;
+
+        const birdImg = new Image(); birdImg.src = 'malupiton.jpg';
+        const playerImg = new Image(); playerImg.src = 'PLAYER2.png';
+        const img1 = new Image(); img1.src = '1.jpg';
+        const img2 = new Image(); img2.src = '2.jpg';
+        const img3 = new Image(); img3.src = '3.jpg';
+        const bgAssets = [img1, img2, img3];
+        
+        let selectedCharacter = 'malupiton';
+        let selectedDifficulty = 'medium';
+
+        var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+        
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('yt-player', {
+                height: '0', width: '0', videoId: 'l9zf789543o',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'showinfo': 0 },
+                events: {
+                    'onReady': (event) => { event.target.setVolume(30); },
+                    'onStateChange': (event) => {
+                        if (event.data === YT.PlayerState.ENDED) player.playVideo();
+                    }
+                }
+            });
+        }
+
+        setInterval(() => {
+            if (player && player.getCurrentTime) {
+                if (player.getCurrentTime() >= LOOP_LIMIT) player.seekTo(0);
+            }
+        }, 500);
+
+        function setDifficulty(level) {
+            selectedDifficulty = level;
+            // Update button styles to show selection
+            document.getElementById('easyBtn').style.border = 'none';
+            document.getElementById('easyBtn').style.transform = 'scale(1)';
+            document.getElementById('mediumBtn').style.border = 'none';
+            document.getElementById('mediumBtn').style.transform = 'scale(1)';
+            document.getElementById('hardBtn').style.border = 'none';
+            document.getElementById('hardBtn').style.transform = 'scale(1)';
+            
+            if (level === 'easy') {
+                document.getElementById('easyBtn').style.border = '3px solid white';
+                document.getElementById('easyBtn').style.transform = 'scale(1.1)';
+            } else if (level === 'medium') {
+                document.getElementById('mediumBtn').style.border = '3px solid white';
+                document.getElementById('mediumBtn').style.transform = 'scale(1.1)';
+            } else if (level === 'hard') {
+                document.getElementById('hardBtn').style.border = '3px solid white';
+                document.getElementById('hardBtn').style.transform = 'scale(1.1)';
+            }
+        }
+
+        function selectCharacter(char) {
+            selectedCharacter = char;
+            
+            // Reset both selections
+            document.getElementById('char1').style.border = '3px solid transparent';
+            document.getElementById('char1').style.background = 'transparent';
+            document.getElementById('char2').style.border = '3px solid transparent';
+            document.getElementById('char2').style.background = 'transparent';
+            
+            // Highlight selected character
+            if (char === 'player') {
+                document.getElementById('char1').style.border = '3px solid white';
+                document.getElementById('char1').style.background = 'rgba(255,255,255,0.1)';
+            } else {
+                document.getElementById('char2').style.border = '3px solid white';
+                document.getElementById('char2').style.background = 'rgba(255,255,255,0.1)';
+            }
+        }
+
+        function setup() { 
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
+            stars = []; 
+            for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*2, op: Math.random()});
+        }
+        window.addEventListener('resize', setup); setup();
+
+        function startCountdown() {
+            const nameInput = document.getElementById("playerName").value.trim();
+            const nameError = document.getElementById("nameError");
+            
+            if (!nameInput) {
+                nameError.style.display = "block";
+                document.getElementById("playerName").focus();
+                return;
+            }
+            
+            nameError.style.display = "none";
+            initAudio();
+            document.getElementById("menu").style.display = "none";
+            document.getElementById("gameOverMenu").style.display = "none";
+            const overlay = document.getElementById("countdownOverlay");
+            overlay.style.display = "block";
+            
+            let count = 3;
+            overlay.innerText = count;
+            playCountdownSound();
+            
+            const timer = setInterval(() => {
+                count--;
+                if(count > 0) {
+                    overlay.innerText = count;
+                    playCountdownSound();
+                } else if(count === 0) {
+                    overlay.innerText = "GO!";
+                    playGoSound();
+                } else {
+                    clearInterval(timer);
+                    overlay.style.display = "none";
+                    startGame();
+                }
+            }, 700); // Faster countdown: 700ms instead of 1000ms
+        }
+
+        function startGame() {
+            if (player && isMusicOn) {
+                // Reset to original background music
+                player.loadVideoById('l9zf789543o');
+                player.setVolume(30);
+                player.playVideo();
+            }
+            const nameInput = document.getElementById("playerName").value || "LODI";
+            document.getElementById("displayName").innerText = "PILOT: " + nameInput;
+            document.getElementById("stats").style.display = "block";
+            
+            const d = selectedDifficulty;
+            if(d === "easy") { speed=6; gap=300; freq=100; bird.g=0.3; }
+            if(d === "medium") { speed=7; gap=250; freq=85; bird.g=0.35; }
+            if(d === "hard") { speed=10; gap=220; freq=70; bird.g=0.45; }
+            resetGame();
+        }
+
+        function resetGame() {
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            bird.y = canvas.height / 2; bird.v = 0;
+            pipes = []; bullets = []; bgElements = []; coins = []; particles = []; 
+            score = 0; pipeCount = 0; frame = 0; dead = false; running = true;
+            const id = document.getElementById("playerName").value || "LODI";
+            document.getElementById("highScoreDisplay").innerText = localStorage.getItem("best_"+id) || 0;
+            loop();
+        }
+
+        function jump() { 
+            if (running && !dead) {
+                playJumpSound();
+                bird.v = bird.jump;
+                for(let i=0; i<12; i++) {
+                    particles.push({
+                        x: bird.x + 10, y: bird.y + bird.h/2, 
+                        vx: -Math.random()*10 - 5, vy: Math.random()*6-3, 
+                        life: 1, c: i % 2 === 0 ? '#8e2de2' : '#00f2ff', size: Math.random()*6 + 2
+                    });
+                }
+            }
+        }
+        
+        window.addEventListener("keydown", (e) => { if (e.code === "Space") jump(); });
+        canvas.addEventListener("mousedown", (e) => { if(e.button === 0) jump(); });
+
+        // --- ENHANCED TUNNEL/PIPE DRAWING ---
+        function drawPipe(x, y, w, h, isTop) {
+            const pulse = Math.sin(frame * 0.1) * 10;
+            
+            // Outer Glow
+            ctx.shadowBlur = 15 + pulse;
+            ctx.shadowColor = "#8e2de2";
+            
+            // Gradient Body
+            let grad = ctx.createLinearGradient(x, 0, x + w, 0);
+            grad.addColorStop(0, '#1a0033'); 
+            grad.addColorStop(0.5, '#4b0082'); 
+            grad.addColorStop(1, '#1a0033');
+            
+            ctx.fillStyle = grad;
+            ctx.fillRect(x, y, w, h);
+            
+            // Energy Ribbons (Vertical Lines)
+            ctx.strokeStyle = "rgba(142, 45, 226, 0.3)";
+            ctx.lineWidth = 2;
+            for(let i=10; i<w; i+=20) {
+                ctx.beginPath();
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x + i, y + h);
+                ctx.stroke();
+            }
+
+            // Glowing Cap
+            let capH = 45; 
+            let capX = x - 10; 
+            let capW = w + 20;
+            let capY = isTop ? (y + h - capH) : y;
+            
+            ctx.fillStyle = "#0a0a0a";
+            ctx.fillRect(capX, capY, capW, capH);
+            
+            // Neon Border for Cap
+            ctx.strokeStyle = "#8e2de2";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(capX, capY, capW, capH);
+            
+            // Inner neon line
+            ctx.strokeStyle = "#00f2ff";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(capX+5, capY+5, capW-10, capH-10);
+
+            ctx.shadowBlur = 0; // Reset shadow
+        }
+
+        function triggerDead() {
+            if(dead) return;
+            dead = true;
+            
+            // Play YouTube Shorts sound on death
+            if (player && player.loadVideoById) {
+                player.loadVideoById('RMRRvfBXCqQ', 0.5);
+                player.setVolume(50);
+                player.playVideo();
+            }
+            
+            playGameOverSound();
+            for(let i=0; i<40; i++){
+                particles.push({
+                    x: bird.x+bird.w/2, y: bird.y+bird.h/2, 
+                    vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20, 
+                    life: 1, c: '#ff0033', size: Math.random()*15
+                });
+            }
+            setTimeout(() => { document.getElementById("gameOverMenu").style.display = "block"; }, 500);
+            const id = document.getElementById("playerName").value || "LODI";
+            let currentBest = localStorage.getItem("best_" + id) || 0;
+            if(score > currentBest) localStorage.setItem("best_" + id, score);
+        }
+
+        function loop() {
+            if (!running) return;
+            if (dead) {
+                ctx.fillStyle = "rgba(0,0,0,0.1)";
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+                updateParticles();
+                gameLoopId = requestAnimationFrame(loop);
+                return;
+            }
+
+            ctx.fillStyle = "#020205";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Stars
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255,255,255,${s.op})`;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+                s.x -= speed * 0.1; if(s.x < 0) s.x = canvas.width;
+            });
+
+            // --- PLANET BACKGROUNDS (Circle Pics) ---
+            if (frame % 200 === 0) {
+                bgElements.push({ 
+                    x: canvas.width + 200, 
+                    y: Math.random() * (canvas.height - 200), 
+                    img: bgAssets[Math.floor(Math.random()*3)], 
+                    s: speed * 0.5, 
+                    size: 150 + Math.random()*100, 
+                    rot: 0 
+                });
+            }
+            bgElements.forEach((el, index) => {
+                el.x -= el.s; el.rot += 0.01;
+                ctx.save();
+                ctx.translate(el.x, el.y);
+                ctx.rotate(el.rot);
+                
+                // Draw Planet Shadow/Glow
+                ctx.beginPath();
+                ctx.arc(0, 0, el.size/2 + 5, 0, Math.PI*2);
+                ctx.fillStyle = "rgba(142, 45, 226, 0.1)";
+                ctx.fill();
+
+                // Clip as Circle
+                ctx.beginPath();
+                ctx.arc(0, 0, el.size/2, 0, Math.PI*2);
+                ctx.clip();
+                ctx.drawImage(el.img, -el.size/2, -el.size/2, el.size, el.size);
+                ctx.restore();
+                
+                if(el.x < -300) bgElements.splice(index, 1);
+            });
+
+            updateParticles();
+            bird.v += bird.g; bird.y += bird.v;
+
+            if (frame % freq === 0) {
+                let h = Math.random() * (canvas.height - gap - 160) + 80;
+                pipes.push({x: canvas.width, t: h, b: canvas.height - h - gap, scored: false, w: 100});
+                pipeCount++;
+                if(pipeCount % 4 === 0) coins.push({ x: canvas.width + 120, y: h + gap/2, r: 25, collected: false });
+            }
+
+            pipes.forEach((p, index) => {
+                p.x -= speed;
+                drawPipe(p.x, 0, p.w, p.t, true);
+                drawPipe(p.x, canvas.height - p.b, p.w, p.b, false);
+                if (bird.x+20 < p.x+p.w && bird.x+bird.w-20 > p.x && (bird.y+20 < p.t || bird.y+bird.h-20 > canvas.height-p.b)) triggerDead();
+                if (p.x + p.w < bird.x && !p.scored) { score++; p.scored = true; }
+                if (p.x < -150) pipes.splice(index, 1);
+            });
+
+            coins.forEach((c, index) => {
+                if(c.collected) return;
+                c.x -= speed;
+                ctx.shadowBlur = 15; ctx.shadowColor = "#00f2ff";
+                ctx.fillStyle = "#00f2ff"; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+                if(Math.hypot(bird.x+bird.w/2 - c.x, bird.y+bird.h/2 - c.y) < bird.w/2 + c.r) { c.collected=true; score+=2; }
+                if (c.x < -100) coins.splice(index, 1);
+            });
+
+            // --- CIRCULAR BIRD PILOT POD ---
+            ctx.save();
+            ctx.translate(bird.x + bird.w/2, bird.y + bird.h/2);
+            ctx.rotate(Math.min(Math.PI/4, Math.max(-Math.PI/4, bird.v * 0.04)));
+            
+            // Outer Pod Glow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = varColor('--accent');
+            
+            // Metal Frame
+            ctx.beginPath();
+            ctx.arc(0, 0, bird.w/2, 0, Math.PI*2);
+            ctx.fillStyle = "#4facfe";
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Image as Circle (The Pilot)
+            ctx.beginPath();
+            ctx.arc(0, 0, bird.w/2 - 5, 0, Math.PI*2);
+            ctx.clip();
+            
+            // Use selected character image
+            const characterImg = selectedCharacter === 'player' ? playerImg : birdImg;
+            ctx.drawImage(characterImg, -bird.w/2, -bird.h/2, bird.w, bird.h);
+            
+            ctx.restore();
+
+            if (bird.y + bird.h > canvas.height || bird.y < 0) triggerDead();
+            document.getElementById("scoreDisplay").innerText = score;
+            frame++; 
+            gameLoopId = requestAnimationFrame(loop);
+        }
+
+        function varColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+        function updateParticles() {
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.fillStyle = p.c; ctx.globalAlpha = p.life;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+        }
+
+        function exitToMenu() { location.reload(); }
+    </script>
+</body> 
+</html>
